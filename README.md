@@ -88,3 +88,5 @@ auto.create.topics.enable=false
 - List down topics: `.\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --list`.
 - List down consumer groups: `.\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --list`.
 - List down consumer group offset: `.\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --describe --group <consumer-group>`.
+- Describe topics (leader, replicas, ISRs): `.\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic <topic-name>`.
+- View commit logs: `kafka-run-class.bat kafka.tools.DumpLogSegments --deep-iteration --files /tmp/kafka-logs/test-topic-0/00000000000000000000.log`.
