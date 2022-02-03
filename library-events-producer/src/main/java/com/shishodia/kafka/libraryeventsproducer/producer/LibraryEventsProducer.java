@@ -1,9 +1,17 @@
 package com.shishodia.kafka.libraryeventsproducer.producer;
 
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shishodia.kafka.libraryeventsproducer.domain.LibraryEvent;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -30,6 +38,7 @@ public class LibraryEventsProducer {
     @Autowired
     ObjectMapper objectMapper;
 
+    /** Async publish */
     public void sendLibraryEvent(LibraryEvent libraryEvent) throws JsonProcessingException {
 
         Integer key = libraryEvent.getLibraryEventId();
@@ -58,6 +67,73 @@ public class LibraryEventsProducer {
             }
         });
         
+    }
+
+    /** Async publish but with specific topic and ProducerRecord */
+    public void sendLibraryEventTopic(LibraryEvent libraryEvent) throws JsonProcessingException {
+
+        Integer key = libraryEvent.getLibraryEventId();
+        String value = objectMapper.writeValueAsString(libraryEvent); // JSON
+
+        /** 
+         * `ProducerRecord()` can be used to configure topics, key, value, partitions, headers and timestamp.
+         * This can then be passed inside `KafkaTemplate.send()`.
+         */
+        String topic = "library-events";
+        ProducerRecord<Integer, String> producerRecord = buildProducerRecord(key, value, topic);
+        ListenableFuture<SendResult<Integer, String>> listenableFuture = kafkaTemplate.send(producerRecord);
+
+        listenableFuture.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
+            /** Executed when publish is unsuccessful. */ 
+            @Override
+            public void onFailure(Throwable ex) {
+                handleFailure(key, value, ex);
+            }
+
+            /**
+             * Executed when publish is successful.
+             * `result` returns data about the partitions, topic, etc.
+             */
+            @Override
+            public void onSuccess(SendResult<Integer, String> result) {
+                handleSuccess(key, value, result);
+            }
+        });
+        
+    }
+
+    /** Sync publish with timeout */
+    public SendResult<Integer, String> sendLibraryEventSync(LibraryEvent libraryEvent) throws Exception {
+
+        Integer key = libraryEvent.getLibraryEventId();
+        String value = objectMapper.writeValueAsString(libraryEvent); // JSON
+        
+        /** Note that Listener is not returned and .get() is used. */
+        SendResult<Integer, String> sendResult = null;
+        try {
+            /** It will timeout in 1 second if the response is not received. */
+            sendResult = kafkaTemplate.sendDefault(key, value).get(1, TimeUnit.SECONDS);
+        } catch (ExecutionException | InterruptedException | TimeoutException e) {
+            log.error("ExecutionException/InterruptedException/TimeoutException sending the message, exception is {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Exception sending the message, exception is {}", e.getMessage());
+            throw e;
+        }
+        return sendResult;
+    }
+
+    /** `ProducerRecord()` can be used to configure topics, key, value, partitions, headers and timestamp. */
+    private ProducerRecord<Integer, String> buildProducerRecord(Integer key, String value, String topic) {
+        /** 
+         * `ProducerRecord()` has many overloaded constructors. 
+         * We are using ProducerRecord<T>(topic, partition, key, value, headers)
+        */
+        List<Header> recordHeaders = List.of(
+            new RecordHeader("event-source", "barcode-scanner".getBytes()),
+            new RecordHeader("event-source", "barcode-scanner".getBytes())
+        );
+        return new ProducerRecord<Integer,String>(topic, null, key, value, recordHeaders);
     }
     
     private void handleFailure(Integer key, String value, Throwable ex) {
