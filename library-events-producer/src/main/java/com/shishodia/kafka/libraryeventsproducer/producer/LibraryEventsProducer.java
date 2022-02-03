@@ -131,7 +131,7 @@ public class LibraryEventsProducer {
         */
         List<Header> recordHeaders = List.of(
             new RecordHeader("event-source", "barcode-scanner".getBytes()),
-            new RecordHeader("event-source", "barcode-scanner".getBytes())
+            new RecordHeader("event-purpose", "create-update-book".getBytes())
         );
         return new ProducerRecord<Integer,String>(topic, null, key, value, recordHeaders);
     }

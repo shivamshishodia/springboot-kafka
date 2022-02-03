@@ -120,3 +120,22 @@ value.serializer = class org.apache.kafka.common.serialization.StringSerializer
 - All the run commands remain the same as above.
 - POST request to the controller `/v1/libraryevent/topic`. Refer thunder-collection under resources.
 - Event Metadata: `KafkaHeaders()` are only applicable using `ProducerRecord()`. Refer `producer.LibraryEventsProducer.buildProducerRecord()` for more.
+
+## Kafka Producer Configurations
+
+- `acks` can be 0, 1 or all. Refer application.properties.
+
+```
+- acks = 1, Default (guarantees message is written to the leader).
+- acks = all (guarantees message is written to the leader and the replicas).
+- acks = 0 (no guarantee)
+```
+
+- `retries` takes care of retrying the record in case of any failure. Refer application.properties.
+
+```
+Integer value = [0, 2147483647].
+The default value is 2147483647.
+```
+
+- More at [Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs).
