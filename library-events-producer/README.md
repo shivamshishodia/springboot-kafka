@@ -1,6 +1,6 @@
 # Library Events Producer
 
-A basic Library events producer project.
+A basic library events producer project.
 
 ## Project Structure
 
