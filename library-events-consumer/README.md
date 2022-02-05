@@ -50,3 +50,10 @@ ConsumerRecord(topic = library-events, partition = 2, leaderEpoch = 9, offset = 
 - Second, you need to create a consumer which implements `AcknowledgingMessageListener`. Coded under `consumer.LibraryEventsConsumerManualOffsets.onMessage()`.
 - IMPORTANT: We will be using batch acknowledge coded under `consumer.LibraryEventsConsumer.onMessage()` for this course, that is why config for manual ack are commented.
 - Search for `UNCOMMENT TO USE MANUAL ACK` in the project to refer manual ack configs.
+
+## Database (H2)
+
+- Console URL: http://localhost:8081/h2-console/.
+- All the associated properties are included in `application.properties`.
+- The `entity` package contains classes from Producer service package `libraryeventsproducer.domain`.
+- Flow: Consumer > Service > Data.
