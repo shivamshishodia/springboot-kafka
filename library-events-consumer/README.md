@@ -40,4 +40,13 @@ ConsumerRecord(topic = library-events, partition = 2, leaderEpoch = 9, offset = 
 - Start Kafka Brokers: Open cmd under `C:\kafka` and execute `.\bin\windows\kafka-server-start.bat .\config\server.properties`.
 - Start Kafka Brokers: Open cmd under `C:\kafka` and execute `.\bin\windows\kafka-server-start.bat .\config\server-1.properties`.
 - Start Kafka Brokers: Open cmd under `C:\kafka` and execute `.\bin\windows\kafka-server-start.bat .\config\server-2.properties`.
-- POST request to the controller `/v1/libraryevent/topic`. Refer thunder-collection under producer resources.
+- POST request to the producer controller `/v1/libraryevent/topic`. Refer thunder-collection under producer resources.
+
+## Consumer Offset
+
+- Spring allows commiting offsets based on the configurations. [Committing Offsets Docs.](https://docs.spring.io/spring-kafka/reference/html/#ooo-commits)
+- In order to manually manage the offsets, an acknowledgement needs to be sent by the consumer after reading the records. Post this, consumer offsets are committed in the topic (__consumer_offsets).
+- First, you need to set the container properties for manual ack in `config.LibraryEventsConsumerConfig.kafkaListenerContainerFactory()`.
+- Second, you need to create a consumer which implements `AcknowledgingMessageListener`. Coded under `consumer.LibraryEventsConsumerManualOffsets.onMessage()`.
+- IMPORTANT: We will be using batch acknowledge coded under `consumer.LibraryEventsConsumer.onMessage()` for this course, that is why config for manual ack are commented.
+- Search for `UNCOMMENT TO USE MANUAL ACK` in the project to refer manual ack configs.
