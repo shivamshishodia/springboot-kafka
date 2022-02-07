@@ -56,4 +56,30 @@ ConsumerRecord(topic = library-events, partition = 2, leaderEpoch = 9, offset = 
 - Console URL: http://localhost:8081/h2-console/.
 - All the associated properties are included in `application.properties`.
 - The `entity` package contains classes from Producer service package `libraryeventsproducer.domain`.
-- Flow: Consumer > Service > Data.
+- Flow: Consumer `LibraryEventsConsumer` > Service `LibraryEventsService` > Data `LibraryEventsRepository`.
+
+## Error Handling
+
+- `config.LibraryEventsConsumerConfig.kafkaListenerContainerFactory()` has `factory.setErrorHandler()` which helps in handling custom errors. 
+- You can decide to persist the failed records inside the database for tracking purpose inside `factory.setErrorHandler()` as well.
+
+## Retry
+
+- The consumer APIs might fail to persist the record into database after a successful `onMessage()` from topic. This can happen due to multiple runtime exceptions while saving data into database (for example).
+- In your `factory.setRetryTemplate()` you can configure configurations like `retryTemplate.setRetryPolicy()` and `simpleRetryPolicy.setMaxAttempts()`.
+- Refer `config.LibraryEventsConsumerConfig` > `customRetryTemplate()` and `customRetryPolicy()` and the comments.
+
+## Retry for specific exceptions
+
+- The consumer APIs might fail to persist the record into database after a successful `onMessage()` from topic. This can happen due to multiple runtime exceptions while saving data into database (for example).
+- We can configure Kafka to ONLY retry for failed records when a specific exception occurs. Retry can be ignored for other exceptions.
+- Under `consumer.LibraryEventsConsumer`, we can choose to ignore IllegalArgumentException and only retry when RecoverableDataAccessException is encountered.
+- To configure this we will use `customExceptionSpecificRetryPolicy()` instead of `customRetryPolicy()` under `config.LibraryEventsConsumerConfig`.
+- Execute a POST requst from your producer API with "libraryEventId" = 0. This will catch the exception and retry.
+
+## Recovery after retry exhaustion
+
+- First thing to do is write the recovery callback logic inside `config.LibraryEventsConsumerConfig.kafkaListenerContainerFactory`. This is done using `factory.setRecoveryCallback()` which takes the retry context.
+- Once the `RecoverableDataAccessException` is caught, the failed record is fetched from retry context and passed to the service layer via `libraryEventsService.handleRecovery()`.
+- `service.LibraryEventsService.handleRecovery()` then publish the failed record back to the topic.
+- Configurations for producer are included inside `application.properties` and code to publish records `service.LibraryEventsService.handleRecovery()` is same as that of producer API (using KafkaTemplate).
