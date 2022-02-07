@@ -139,3 +139,17 @@ The default value is 2147483647.
 ```
 
 - More at [Kafka Producer Configs](https://kafka.apache.org/documentation/#producerconfigs).
+
+## Possible Kafka Producer Errors
+
+- acks = all but some brokers are not available.
+- Kafka cluster may not be available. `NetworkClient` which is used by `KafkaTemplate` to publish messages throws error `Connection to node -1 could not be established. Broker may not be available` continuously till atleast one of the broker is up. The connection resumes when any of the broker is up.
+- `min.insync.replicas` configurations. Let us suppose you have 3 brokers in a cluster and `min.insync.replicas` is set to 2. Everything works fine until the number of brokers in the cluster falls below 2. As Kafka will not have enough brokers to maintain replicas, a `Message are rejected since there are fewer in-sync replicas than required` will be thrown. The messages start working when atleast two brokers are up.
+
+```
+.\bin\windows\kafka-configs.bat --alter --bootstrap-server localhost:9092 --entity-type topics --entity-name library-events --add-config min.insync.replicas=2
+```
+
+## Retain/Recover Failed Records
+
+If publishing of the record to the topic fails, you can handle or manage what will happen to the record inside the `handleFailure()` implemented inside `producer.LibraryEventsProducer`. You can save the record inside the database or push it to other topic. The approach depends on the system design of the application.
